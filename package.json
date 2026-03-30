@@ -1,0 +1,47 @@
+{
+  "name": "project-1",
+  "version": "1.0.0",
+  "description": "SportsInn backend (microservices + API gateway)",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npm run start:all",
+    "start:all": "concurrently -n gateway,auth,user,feed,message,notification,tournament,upload -c blue,green,yellow,magenta,cyan,red,gray,white \"npm run gateway\" \"npm run auth\" \"npm run user\" \"npm run feed\" \"npm run message\" \"npm run notification\" \"npm run tournament\" \"npm run upload\"",
+    "gateway": "cd api-gateway && npm run start",
+    "gateway:dev": "cd api-gateway && npm run dev",
+    "auth": "cd auth-service && npm run start",
+    "auth:dev": "cd auth-service && npm run dev",
+    "user": "cd user-service && npm run start",
+    "user:dev": "cd user-service && npm run dev",
+    "feed": "cd feed-service && npm run start",
+    "feed:dev": "cd feed-service && npm run dev",
+    "message": "cd message-service && npm run start",
+    "message:dev": "cd message-service && npm run dev",
+    "notification": "cd notification-service && npm run start",
+    "notification:dev": "cd notification-service && npm run dev",
+    "tournament": "cd tournament-service && npm run start",
+    "tournament:dev": "cd tournament-service && npm run dev",
+    "upload": "cd upload-service && npm run start",
+    "upload:dev": "cd upload-service && npm run dev",
+    "install:services": "npm install && cd api-gateway && npm install && cd ../auth-service && npm install && cd ../user-service && npm install && cd ../feed-service && npm install && cd ../message-service && npm install && cd ../notification-service && npm install && cd ../tournament-service && npm install && cd ../upload-service && npm install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VALX-GALAXY/project-1.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/VALX-GALAXY/project-1/issues"
+  },
+  "homepage": "https://github.com/VALX-GALAXY/project-1#readme",
+  "dependencies": {
+    "concurrently": "^9.1.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "redis": "^5.8.3"
+  }
+}
