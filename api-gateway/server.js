@@ -270,8 +270,8 @@ app.get("/", (req, res) => {
 // Serve uploads folder for local file fallback (optional - gateway can serve static)
 // app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
-app.listen(PORT, () => {
-  console.log(`API Gateway running on http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`API Gateway running on port ${PORT}`);
   console.log(`  /api/auth -> Auth Service (4001)`);
   console.log(`  /api/users, /api/profile, /api/dashboard, /api/search, /api/applications, /api/reports -> User Service (4002)`);
   console.log(`  /api/feed, /api/stories, /api/story -> Feed Service (4003)`);
