@@ -2,7 +2,8 @@ const Story = require("../models/storyModel");
 const User = require("../models/userModel");
 const feedService = require("./feedService");
 
-const STORY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+/** List window for stories (Mongo filter). Media stays in Cloudinary; tune via STORY_MAX_AGE_MS. Default 7d. */
+const STORY_MAX_AGE_MS = Number(process.env.STORY_MAX_AGE_MS) || 7 * 24 * 60 * 60 * 1000;
 
 async function createStory(userId, file, mediaTypeHint) {
   const { url, type } = await feedService.uploadFile(file, { subfolder: "stories" });
@@ -74,9 +75,9 @@ async function deleteStory(requestingUserId, storyId) {
     err.code = "FORBIDDEN";
     throw err;
   }
-  const mediaUrl = story.mediaUrl;
   await Story.deleteOne({ _id: storyId });
-  await feedService.deleteOrphanStoryMedia(mediaUrl);
+  // Do not delete Cloudinary (or local) files here. Story media lives in the stories/ folder and
+  // may be refetched by URL; removing CDN assets broke users who expected uploads to persist.
   return { deleted: true };
 }
 

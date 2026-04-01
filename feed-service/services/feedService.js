@@ -166,17 +166,25 @@ async function deletePost(user, postId) {
   const post = await Post.findById(postId);
   if (!post) throw new Error("Post not found");
   if (String(post.authorId) !== String(user._id)) throw new Error("Not allowed");
-  await deleteStoredFeedMedia(post);
+  const mediaUrl = post.mediaUrl;
   await post.deleteOne();
+  await deleteOrphanStoryMedia(mediaUrl);
   return { success: true };
 }
 
-/** After deleting a story, remove CDN/local file only if no feed post still uses the same URL. */
+/**
+ * Remove CDN/local file only if no feed post and no active story use this exact URL.
+ * Prevents deleting a Cloudinary asset that is still referenced by a story.
+ */
 async function deleteOrphanStoryMedia(mediaUrl) {
   if (!mediaUrl || typeof mediaUrl !== "string") return;
-  const n = await Post.countDocuments({ mediaUrl: mediaUrl.trim() });
-  if (n > 0) return;
-  await deleteStoredFeedMedia({ mediaUrl: mediaUrl.trim() });
+  const trimmed = mediaUrl.trim();
+  const [postCount, storyCount] = await Promise.all([
+    Post.countDocuments({ mediaUrl: trimmed }),
+    Story.countDocuments({ mediaUrl: trimmed }),
+  ]);
+  if (postCount > 0 || storyCount > 0) return;
+  await deleteStoredFeedMedia({ mediaUrl: trimmed });
 }
 
 async function getPersonalizedFeed(userId) {
