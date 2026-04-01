@@ -30,17 +30,26 @@ async function createStoryFromMediaUrl(userId, mediaUrl, mediaTypeHint) {
 
 async function listGrouped() {
   const since = new Date(Date.now() - STORY_MAX_AGE_MS);
+  // Lean + batch User lookup: populate() drops the whole story when the User doc is missing,
+  // which made stories "disappear" from the feed even though they still exist in MongoDB.
   const stories = await Story.find({ createdAt: { $gte: since } })
     .sort({ createdAt: -1 })
-    .populate("userId", "name profilePic")
     .lean();
+
+  const rawIds = stories.map((s) => s.userId).filter(Boolean);
+  const uniqueIds = [...new Set(rawIds.map((id) => String(id)))];
+  const users =
+    uniqueIds.length === 0
+      ? []
+      : await User.find({ _id: { $in: uniqueIds } } }).select("name profilePic").lean();
+  const userById = new Map(users.map((u) => [String(u._id), u]));
 
   const byUser = new Map();
   for (const s of stories) {
-    const u = s.userId;
-    if (!u || !u._id) continue;
-    const uid = String(u._id);
+    if (s.userId == null) continue;
+    const uid = String(s.userId);
     if (!byUser.has(uid)) {
+      const u = userById.get(uid) || {};
       byUser.set(uid, {
         userId: uid,
         userName: u.name || "",
