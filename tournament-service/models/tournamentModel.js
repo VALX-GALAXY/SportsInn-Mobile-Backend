@@ -6,6 +6,10 @@ const applicantSchema = new mongoose.Schema({
   appliedAt: { type: Date, default: () => new Date() },
   decidedAt: { type: Date },
   decidedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  teamName: { type: String, default: "" },
+  contactEmail: { type: String, default: "" },
+  contactPhone: { type: String, default: "" },
+  notes: { type: String, default: "" },
 }, { _id: true });
 
 const tournamentSchema = new mongoose.Schema({

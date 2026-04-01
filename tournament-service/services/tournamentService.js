@@ -62,12 +62,17 @@ async function getTournamentById(id) {
   return Tournament.findById(id).populate("createdBy", "name email").lean();
 }
 
-async function applyTournament(user, tournamentId) {
+async function applyTournament(user, tournamentId, application = {}) {
   const t = await Tournament.findById(tournamentId);
   if (!t) {
     const e = new Error("Tournament not found");
     e.status = 404;
     throw e;
+  }
+  if (t.status === "Closed") {
+    const err = new Error("Registration is closed for this tournament");
+    err.status = 400;
+    throw err;
   }
   if (t.deadline && new Date() > new Date(t.deadline)) {
     const err = new Error("Application deadline has passed");
@@ -80,7 +85,15 @@ async function applyTournament(user, tournamentId) {
     err.status = 400;
     throw err;
   }
-  t.applicants.push({ userId: user._id, status: "applied", appliedAt: new Date() });
+  t.applicants.push({
+    userId: user._id,
+    status: "applied",
+    appliedAt: new Date(),
+    teamName: (application.teamName || "").trim(),
+    contactEmail: (application.contactEmail || "").trim(),
+    contactPhone: (application.contactPhone || "").trim(),
+    notes: (application.notes || application.additionalInfo || "").trim(),
+  });
   await t.save();
 
   const author = await User.findById(t.createdBy).select("name");
