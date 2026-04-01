@@ -2,6 +2,7 @@ const cloudinary = require("cloudinary").v2;
 const fs = require("fs");
 const path = require("path");
 const Post = require("../models/postModel");
+const Story = require("../models/storyModel");
 const User = require("../models/userModel");
 const Notification = require("../models/notificationModel");
 
@@ -154,12 +155,28 @@ async function toggleLike(user, postId) {
 }
 
 async function deletePost(user, postId) {
+  const asStory = await Story.findById(postId).select("_id").lean();
+  if (asStory) {
+    const err = new Error(
+      "This id is a story, not a feed post. Use DELETE /api/stories/:id to remove stories."
+    );
+    err.code = "IS_STORY";
+    throw err;
+  }
   const post = await Post.findById(postId);
   if (!post) throw new Error("Post not found");
   if (String(post.authorId) !== String(user._id)) throw new Error("Not allowed");
   await deleteStoredFeedMedia(post);
   await post.deleteOne();
   return { success: true };
+}
+
+/** After deleting a story, remove CDN/local file only if no feed post still uses the same URL. */
+async function deleteOrphanStoryMedia(mediaUrl) {
+  if (!mediaUrl || typeof mediaUrl !== "string") return;
+  const n = await Post.countDocuments({ mediaUrl: mediaUrl.trim() });
+  if (n > 0) return;
+  await deleteStoredFeedMedia({ mediaUrl: mediaUrl.trim() });
 }
 
 async function getPersonalizedFeed(userId) {
@@ -262,6 +279,7 @@ module.exports = {
   unlikePost,
   toggleLike,
   deletePost,
+  deleteOrphanStoryMedia,
   getPersonalizedFeed,
   getPersonalizedFeedPaged,
   getPostsByUser,

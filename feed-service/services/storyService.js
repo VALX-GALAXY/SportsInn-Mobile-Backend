@@ -74,7 +74,9 @@ async function deleteStory(requestingUserId, storyId) {
     err.code = "FORBIDDEN";
     throw err;
   }
+  const mediaUrl = story.mediaUrl;
   await Story.deleteOne({ _id: storyId });
+  await feedService.deleteOrphanStoryMedia(mediaUrl);
   return { deleted: true };
 }
 
